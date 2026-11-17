@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2a78d6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Prépa CFD">
+<title>Prépa CFD</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+:root{
+  --bg:#f4f6f9; --card:#ffffff; --text:#171a21; --muted:#5d6675; --line:#e2e6ec;
+  --accent:#2a78d6; --accent-ink:#ffffff;
+  --ok:#14874f; --ok-bg:#e5f5ec; --bad:#c43c3c; --bad-bg:#fbeaea;
+  --warn-bg:#fff6e0;
+  --code-bg:#f0f2f6; --code-text:#1d2330;
+  --k:#8a3fd1; --s:#1a7f4b; --c:#8a93a3; --n:#c2410c; --b:#1f63b8; --v:#b4235c;
+  --shadow:0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08);
+  --radius:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1218; --card:#171b23; --text:#e8ebf1; --muted:#9aa3b2; --line:#272d39;
+    --accent:#4b93ec; --accent-ink:#0b0e13;
+    --ok:#4cc38a; --ok-bg:#12291f; --bad:#ef6b6b; --bad-bg:#2d1618;
+    --warn-bg:#2a2414;
+    --code-bg:#11151c; --code-text:#dfe4ec;
+    --k:#c39bff; --s:#7dd3a0; --c:#6b7485; --n:#f59e5b; --b:#7fb2ff; --v:#ff8db6;
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+    --bg:#0f1218; --card:#171b23; --text:#e8ebf1; --muted:#9aa3b2; --line:#272d39;
+    --accent:#4b93ec; --accent-ink:#0b0e13;
+    --ok:#4cc38a; --ok-bg:#12291f; --bad:#ef6b6b; --bad-bg:#2d1618;
+    --warn-bg:#2a2414;
+    --code-bg:#11151c; --code-text:#dfe4ec;
+    --k:#c39bff; --s:#7dd3a0; --c:#6b7485; --n:#f59e5b; --b:#7fb2ff; --v:#ff8db6;
+    --shadow:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text);
+  font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent;
+}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-appearance:none;appearance:none}
+.wrap{max-width:640px;margin:0 auto;padding:16px 16px calc(110px + env(safe-area-inset-bottom));padding-top:calc(12px + env(safe-area-inset-top))}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+
+/* ---------- accueil ---------- */
+.hero{padding:12px 2px 6px}
+.hero h1{font-size:28px;line-height:1.15;margin:0 0 4px;letter-spacing:-.01em}
+.hero p{margin:0;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow)}
+.stat b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.big{display:flex;align-items:center;justify-content:space-between;width:100%;border:0;border-radius:var(--radius);padding:16px 18px;margin:0 0 10px;text-align:left;box-shadow:var(--shadow)}
+.big.primary{background:var(--accent);color:var(--accent-ink)}
+.big.secondary{background:var(--card);border:1px solid var(--line)}
+.big small{display:block;opacity:.8;font-size:13px}
+.big[disabled]{opacity:.45;cursor:default}
+.section-title{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:22px 2px 10px}
+.decks{display:grid;grid-template-columns:1fr;gap:10px}
+@media (min-width:560px){.decks{grid-template-columns:1fr 1fr}}
+.deck{position:relative;display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 14px 14px 18px;box-shadow:var(--shadow);overflow:hidden}
+.deck::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c)}
+.deck h3{margin:0 0 2px;font-size:17px}
+.deck p{margin:0 0 8px;color:var(--muted);font-size:14px}
+.deck .meta{display:flex;gap:10px;font-size:13px;color:var(--muted)}
+.bar{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:8px}
+.bar>i{display:block;height:100%;background:var(--c, var(--accent));border-radius:6px}
+.foot{margin-top:28px;text-align:center;color:var(--muted);font-size:13px}
+.linkbtn{background:none;border:0;color:var(--muted);text-decoration:underline;padding:8px}
+
+/* ---------- quiz ---------- */
+.qbar{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.icon{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;flex:none}
+.progress{flex:1;height:8px;background:var(--line);border-radius:8px;overflow:hidden}
+.progress>i{display:block;height:100%;background:var(--accent);transition:width .25s}
+.count{font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums;flex:none}
+.tag{font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px}
+.q{font-size:19px;line-height:1.4;margin:0 0 14px;font-weight:650}
+.code{background:var(--code-bg);color:var(--code-text);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 14px;overflow-x:auto;font-size:13.5px;line-height:1.55;white-space:pre}
+.choices{display:flex;flex-direction:column;gap:10px}
+.choice{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:13px 14px;min-height:52px;box-shadow:var(--shadow);transition:border-color .15s,background .15s}
+.choice .l{flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:13px;font-weight:700;background:var(--code-bg);color:var(--muted)}
+.choice .t{flex:1;word-break:break-word}
+.choice.mono .t{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px}
+.choice.ok{border-color:var(--ok);background:var(--ok-bg)}
+.choice.ok .l{background:var(--ok);color:#fff}
+.choice.bad{border-color:var(--bad);background:var(--bad-bg)}
+.choice.bad .l{background:var(--bad);color:#fff}
+.choice.dim{opacity:.55}
+.choice:disabled{cursor:default}
+
+/* chasse au bug */
+.lines{background:var(--code-bg);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.ln{display:flex;width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:left;padding:0;font-size:13.5px;line-height:1.5;min-height:40px;align-items:stretch}
+.ln:last-child{border-bottom:0}
+.ln .no{flex:none;width:34px;padding:9px 6px;text-align:right;color:var(--c);user-select:none;border-right:1px solid var(--line)}
+.ln .src{flex:1;padding:9px 10px;white-space:pre;overflow-x:auto;color:var(--code-text)}
+.ln.picked{background:var(--bad-bg)}
+.ln.picked.ok{background:var(--ok-bg)}
+.ln.right{box-shadow:inset 4px 0 0 var(--ok)}
+.ln:disabled{cursor:default}
+.hint{font-size:14px;color:var(--muted);margin:-4px 0 12px}
+.step{font-size:15px;font-weight:650;margin:16px 0 10px}
+
+/* remise en ordre */
+.zone-title{font-size:13px;color:var(--muted);margin:4px 0 8px;display:flex;justify-content:space-between}
+.sol{min-height:64px;border:1.5px dashed var(--line);border-radius:12px;padding:8px;margin-bottom:16px;display:flex;flex-direction:column;gap:6px}
+.sol.empty::after{content:"Touche les blocs ci-dessous dans le bon ordre";color:var(--muted);font-size:14px;padding:10px;text-align:center}
+.pool{display:flex;flex-direction:column;gap:6px}
+.tile{display:flex;gap:8px;align-items:flex-start;width:100%;text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:9px 10px;font-size:13px;line-height:1.45;box-shadow:var(--shadow)}
+.tile .n{flex:none;min-width:20px;height:20px;border-radius:6px;background:var(--code-bg);color:var(--muted);font-size:11px;font-weight:700;display:grid;place-items:center;font-family:inherit}
+.tile .src{flex:1;white-space:pre-wrap;word-break:break-word;color:var(--code-text)}.tile.ok{border-color:var(--ok);background:var(--ok-bg)}
+.tile.bad{border-color:var(--bad);background:var(--bad-bg)}
+.tile:disabled{cursor:default}
+
+/* formule à trous */
+.formula{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 14px;font-size:18px;line-height:2.4;margin-bottom:14px;box-shadow:var(--shadow);font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;word-break:break-word}
+.formula sub,.formula sup{font-size:.7em;line-height:0}
+.blank{display:inline-flex;align-items:center;justify-content:center;min-width:56px;min-height:38px;padding:0 10px;margin:0 3px;border-radius:10px;border:2px dashed var(--muted);background:var(--code-bg);font:inherit;font-size:17px;vertical-align:middle;line-height:1.2}
+.blank.filled{border-style:solid;border-color:var(--line);background:var(--bg)}
+.blank.active{border-color:var(--accent);border-style:solid;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+.blank.ok{border-color:var(--ok);background:var(--ok-bg);border-style:solid}
+.blank.bad{border-color:var(--bad);background:var(--bad-bg);border-style:solid}
+.blank sub,.blank sup{font-size:.7em;line-height:0}
+.opts{display:flex;flex-wrap:wrap;gap:10px}
+.opt{min-width:72px;min-height:48px;padding:8px 16px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);font-size:18px;font-family:"Cambria Math","STIX Two Math","Times New Roman",serif;box-shadow:var(--shadow)}
+.opt sub,.opt sup{font-size:.7em;line-height:0}
+
+/* feedback */
+.fb{border-radius:12px;padding:14px;margin-top:16px;border:1px solid transparent}
+.fb.ok{background:var(--ok-bg);border-color:color-mix(in srgb,var(--ok) 35%,transparent)}
+.fb.bad{background:var(--bad-bg);border-color:color-mix(in srgb,var(--bad) 35%,transparent)}
+.fb .h{font-weight:700;margin-bottom:4px}
+.fb.ok .h{color:var(--ok)} .fb.bad .h{color:var(--bad)}
+.fb .ans{margin:6px 0 8px;font-size:15px}
+.fb .ans .code{margin:8px 0 0;font-size:12.5px;white-space:pre-wrap;word-break:break-word}
+.fb .exp{font-size:15px;color:var(--text)}
+.fb .exp b{font-weight:650}
+
+/* barre d'action fixe */
+.actions{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
+.actions .in{max-width:640px;margin:0 auto;display:flex;gap:10px}
+.btn{flex:1;min-height:52px;border-radius:14px;border:0;font-weight:650;font-size:17px;background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{flex:none;background:var(--card);color:var(--text);border:1px solid var(--line);padding:0 18px}
+.btn[disabled]{opacity:.4;cursor:default}
+
+/* fin */
+.end{text-align:center;padding:20px 4px}
+.ring{width:150px;height:150px;margin:10px auto 14px;position:relative}
+.ring svg{transform:rotate(-90deg)}
+.ring .v{position:absolute;inset:0;display:grid;place-items:center;font-size:34px;font-weight:750;font-variant-numeric:tabular-nums}
+.end h2{margin:6px 0 4px}
+.end p{color:var(--muted);margin:0 0 18px}
+.missed{text-align:left;margin-top:18px}
+.missed li{margin-bottom:8px;font-size:14px}
+.missed ul{padding-left:18px}
+
+/* coloration syntaxique */
+.k{color:var(--k)} .s{color:var(--s)} .c{color:var(--c);font-style:italic} .nb{color:var(--n)} .b{color:var(--b)} .v{color:var(--v)}
+
+.fade{animation:fade .2s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.fade{animation:none}.progress>i{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div class="actions" id="actions" hidden><div class="in" id="actions-in"></div></div>
+
+<script src="questions.js"></script>
+<script>
+"use strict";
+/* =================== stockage local (scores, erreurs) =================== */
+const KEY = "prepa-cfd-v1";
+function loadStore(){
+  try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e){ return {}; }
+}
+function saveStore(){
+  try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e){}
+}
+const store = Object.assign({ best:{}, mistakes:[], answered:0, correct:0 }, loadStore());
+
+/* =================== préparation des données =================== */
+const ALL = [];
+DECKS.forEach(d => d.questions.forEach((q, i) => {
+  q.id = d.id + "-" + i; q.deck = d;
+  if (q.type === "order") {
+    q.items = q.lines.map((l, j) => typeof l === "string" ? { t:l, g:j } : { t:l.t, g:l.g });
+  }
+  ALL.push(q);
+}));
+const BYID = Object.fromEntries(ALL.map(q => [q.id, q]));
+store.mistakes = store.mistakes.filter(id => BYID[id]);
+
+/* =================== utilitaires =================== */
+const $app = document.getElementById("app");
+const $actions = document.getElementById("actions");
+const $actionsIn = document.getElementById("actions-in");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+// texte français : espace insécable avant : ; ? ! » et après « (évite un « : » seul en début de ligne)
+const txt = s => esc(s).replace(/ ([:;?!»])/g, "\u00a0$1").replace(/« /g, "«\u00a0");
+function shuffle(a){ a = a.slice(); for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+const LETTERS = "ABCDEFGH";
+function buzz(){ try { navigator.vibrate && navigator.vibrate(35); } catch(e){} }
+
+const KW = {
+  python: new Set("False None True and as assert break class continue def del elif else except finally for from global if import in is lambda not or pass raise return try while with yield".split(" ")),
+  bash: new Set("cd export if then fi for do done echo while case esac in alias".split(" "))
+};
+const BI = {
+  python: new Set("print len range float int str sum max min sorted abs open next enumerate zip round any all list dict set self np math bpy".split(" ")),
+  bash: new Set("docker mpirun blockMesh snappyHexMesh checkMesh decomposePar reconstructPar simpleFoam pimpleFoam topoSet surfaceFeatureExtract tail grep foamDictionary foamListTimes xhost defaults open gmsh apt-get bash brew code_saturne".split(" "))
+};
+function hl(src, lang){
+  if (!lang) return esc(src);
+  const re = lang === "python"
+    ? /(#[^\n]*)|('''[\s\S]*?'''|"""[\s\S]*?"""|'(?:\\.|[^'\\\n])*'|"(?:\\.|[^"\\\n])*")|(\b\d+(?:\.\d+)?(?:e[-+]?\d+)?\b)|([A-Za-z_]\w*)|([\s\S])/g
+    : /(^[ \t]*#[^\n]*)|('[^'\n]*'|"(?:\\.|[^"\\\n])*")|(\$\w+|\$\([^)]*\)|\$\{[^}]*\})|(\b\d+(?:\.\d+)?\b)|([A-Za-z_][\w.-]*)|([\s\S])/gm;
+  let out = "", m;
+  while ((m = re.exec(src))){
+    if (lang === "python"){
+      if (m[1]) out += `<span class="c">${esc(m[1])}</span>`;
+      else if (m[2]) out += `<span class="s">${esc(m[2])}</span>`;
+      else if (m[3]) out += `<span class="nb">${esc(m[3])}</span>`;
+      else if (m[4]) out += KW.python.has(m[4]) ? `<span class="k">${m[4]}</span>` : BI.python.has(m[4]) ? `<span class="b">${m[4]}</span>` : esc(m[4]);
+      else out += esc(m[5]);
+    } else {
+      if (m[1]) out += `<span class="c">${esc(m[1])}</span>`;
+      else if (m[2]) out += `<span class="s">${esc(m[2])}</span>`;
+      else if (m[3]) out += `<span class="v">${esc(m[3])}</span>`;
+      else if (m[4]) out += `<span class="nb">${esc(m[4])}</span>`;
+      else if (m[5]) out += KW.bash.has(m[5]) ? `<span class="k">${esc(m[5])}</span>` : BI.bash.has(m[5]) ? `<span class="b">${esc(m[5])}</span>` : esc(m[5]);
+      else out += esc(m[6]);
+    }
+  }
+  return out;
+}
+const TYPE_LABEL = { mcq:"QCM", bug:"Chasse au bug", order:"Remets dans l'ordre", fill:"Complète la formule" };
+
+/* =================== état =================== */
+let S = null; // session en cours
+
+function setActions(html){
+  if (!html){ $actions.hidden = true; $actionsIn.innerHTML = ""; return; }
+  $actions.hidden = false; $actionsIn.innerHTML = html;
+}
+
+/* =================== accueil =================== */
+function home(){
+  S = null;
+  window.scrollTo(0, 0);
+  const pct = store.answered ? Math.round(100 * store.correct / store.answered) : 0;
+  const nm = store.mistakes.length;
+  $app.innerHTML = `
+  <div class="fade">
+    <div class="hero">
+      <h1>Prépa CFD</h1>
+      <p>CFD, dispersion atmosphérique, Python, Blender et Bash : 10 questions par partie, avec l'explication après chaque réponse.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><b>${store.answered}</b><span>réponses</span></div>
+      <div class="stat"><b>${store.answered ? pct + "%" : "–"}</b><span>réussite</span></div>
+      <div class="stat"><b>${nm}</b><span>à revoir</span></div>
+    </div>
+    <button class="big primary" data-act="mix"><span><b>Défi mixte</b><small>10 questions tirées de tous les thèmes</small></span><span aria-hidden="true">→</span></button>
+    <button class="big secondary" data-act="mistakes" ${nm ? "" : "disabled"}><span><b>Revoir mes erreurs</b><small>${nm ? nm + " question" + (nm > 1 ? "s" : "") + " ratée" + (nm > 1 ? "s" : "") : "Aucune pour l'instant"}</small></span><span aria-hidden="true">→</span></button>
+    <div class="section-title">Thèmes</div>
+    <div class="decks">
+      ${DECKS.map(d => {
+        const best = store.best[d.id];
+        return `<button class="deck" style="--c:${d.color}" data-act="deck" data-id="${d.id}">
+          <h3>${esc(d.title)}</h3>
+          <p>${esc(d.sub)}</p>
+          <div class="meta"><span>${d.questions.length} questions</span><span>Record : ${best != null ? best + "%" : "–"}</span></div>
+          <div class="bar"><i style="width:${best || 0}%"></i></div>
+        </button>`;
+      }).join("")}
+    </div>
+    <div class="foot">
+      <button class="linkbtn" data-act="theme">Thème : ${themeLabel()}</button> ·
+      <button class="linkbtn" data-act="reset">Remettre les stats à zéro</button>
+    </div>
+  </div>`;
+  setActions("");
+}
+
+function themeLabel(){
+  const t = document.documentElement.getAttribute("data-theme");
+  return t === "dark" ? "sombre" : t === "light" ? "clair" : "auto";
+}
+function cycleTheme(){
+  const t = document.documentElement.getAttribute("data-theme");
+  const next = t === null ? "dark" : t === "dark" ? "light" : null;
+  if (next) document.documentElement.setAttribute("data-theme", next); else document.documentElement.removeAttribute("data-theme");
+  try { next ? localStorage.setItem(KEY + "-theme", next) : localStorage.removeItem(KEY + "-theme"); } catch(e){}
+  home();
+}
+try { const t = localStorage.getItem(KEY + "-theme"); if (t) document.documentElement.setAttribute("data-theme", t); } catch(e){}
+
+/* =================== sessions =================== */
+function start(queue, kind, deckId){
+  S = { queue, kind, deckId, i:0, score:0, results:[] };
+  showQuestion();
+}
+function startDeck(id){
+  const d = DECKS.find(x => x.id === id);
+  start(shuffle(d.questions).slice(0, 10), "deck", id);
+}
+function startMix(){
+  // équilibre : on pioche à tour de rôle dans chaque thème
+  const pools = DECKS.map(d => shuffle(d.questions));
+  const out = [];
+  let k = 0;
+  while (out.length < 10 && pools.some(p => p.length)){
+    const p = pools[k % pools.length]; if (p.length) out.push(p.pop()); k++;
+  }
+  start(shuffle(out), "mix");
+}
+function startMistakes(){
+  start(shuffle(store.mistakes.map(id => BYID[id])).slice(0, 15), "mistakes");
+}
+
+/* =================== affichage d'une question =================== */
+function showQuestion(){
+  const q = S.queue[S.i];
+  S.st = initState(q);
+  render();
+  window.scrollTo(0, 0);
+}
+
+function initState(q){
+  const st = { answered:false, correct:false };
+  if (q.type === "mcq" || q.type === "bug") st.perm = shuffle(q.choices.map((_, i) => i));
+  if (q.type === "bug"){ st.phase = "line"; st.line = null; st.choice = null; }
+  if (q.type === "mcq"){ st.choice = null; }
+  if (q.type === "order"){
+    const items = q.items.map((it, j) => ({ id:"l" + j, t:it.t, g:it.g, d:false }))
+      .concat((q.distractors || []).map((t, j) => ({ id:"d" + j, t, g:null, d:true })));
+    st.items = Object.fromEntries(items.map(it => [it.id, it]));
+    st.pool = shuffle(items.map(it => it.id));
+    // évite de proposer les blocs déjà dans le bon ordre
+    if (st.pool.filter(id => !st.items[id].d).join() === q.items.map((_, j) => "l" + j).join() && st.pool.length > 2) st.pool.reverse();
+    st.sol = [];
+  }
+  if (q.type === "fill"){
+    st.vals = q.blanks.map(() => null);
+    st.active = 0;
+    st.optPerm = q.blanks.map(b => shuffle(b.options.map((_, i) => i)));
+  }
+  return st;
+}
+
+function render(){
+  const q = S.queue[S.i], st = S.st, d = q.deck;
+  const n = S.queue.length;
+  let body = "";
+  if (q.type === "mcq") body = renderMcq(q, st);
+  else if (q.type === "bug") body = renderBug(q, st);
+  else if (q.type === "order") body = renderOrder(q, st);
+  else if (q.type === "fill") body = renderFill(q, st);
+
+  $app.innerHTML = `
+  <div class="qbar">
+    <button class="icon" data-act="quit" aria-label="Quitter la partie">✕</button>
+    <div class="progress" aria-hidden="true"><i style="width:${100 * (S.i + (st.answered ? 1 : 0)) / n}%"></i></div>
+    <span class="count">${S.i + 1}/${n}</span>
+  </div>
+  <div class="tag" style="color:${d.color}">${esc(d.title)} · ${TYPE_LABEL[q.type]}</div>
+  <h2 class="q">${txt(q.q)}</h2>
+  ${body}
+  ${st.answered ? renderFeedback(q, st) : ""}`;
+
+  // barre d'actions
+  if (st.answered){
+    const last = S.i === n - 1;
+    setActions(`<button class="btn" data-act="next">${last ? "Voir le résultat" : "Question suivante"}</button>`);
+  } else if (q.type === "order"){
+    setActions(`<button class="btn ghost" data-act="ord-clear" ${st.sol.length ? "" : "disabled"}>Effacer</button><button class="btn" data-act="ord-check" ${st.sol.length ? "" : "disabled"}>Valider</button>`);
+  } else if (q.type === "fill"){
+    setActions(`<button class="btn" data-act="fill-check" ${st.vals.every(v => v !== null) ? "" : "disabled"}>Valider</button>`);
+  } else {
+    setActions("");
+  }
+}
+
+function codeBlock(q){ return q.code ? `<div class="code">${hl(q.code, q.lang)}</div>` : ""; }
+
+function choiceList(q, st, act, chosen, showResult){
+  const mono = q.lang && q.choices.every(c => /[=(){}\[\]._]/.test(c) && c.length < 90) ? " mono" : "";
+  return `<div class="choices">${st.perm.map((ci, k) => {
+    let cls = "";
+    if (showResult){
+      if (ci === q.answer) cls = " ok";
+      else if (ci === chosen) cls = " bad";
+      else cls = " dim";
+    }
+    return `<button class="choice${mono}${cls}" data-act="${act}" data-i="${ci}" ${showResult ? "disabled" : ""}>
+      <span class="l">${LETTERS[k]}</span><span class="t">${txt(q.choices[ci])}</span></button>`;
+  }).join("")}</div>`;
+}
+
+function renderMcq(q, st){
+  return codeBlock(q) + choiceList(q, st, "mcq", st.choice, st.answered);
+}
+
+function renderBug(q, st){
+  const lines = q.code.split("\n");
+  const showLine = st.phase !== "line";
+  const ln = lines.map((l, k) => {
+    const no = k + 1;
+    let cls = "";
+    if (showLine){
+      if (no === st.line) cls += " picked" + (q.bug.includes(no) ? " ok" : "");
+      if (q.bug.includes(no)) cls += " right";
+    }
+    return `<button class="ln mono${cls}" data-act="line" data-n="${no}" ${showLine ? "disabled" : ""}>
+      <span class="no">${no}</span><span class="src">${hl(l, q.lang) || " "}</span></button>`;
+  }).join("");
+  let html = (st.phase === "line" ? `<p class="hint">1. Touche la ligne qui contient l'erreur.</p>` : "") + `<div class="lines">${ln}</div>`;
+  if (showLine){
+    const lineOk = q.bug.includes(st.line);
+    html += `<p class="hint">${lineOk ? "Bonne ligne." : "Ce n'est pas celle-là : la ligne fautive est surlignée en vert à gauche."}</p>`;
+    html += `<div class="step">2. Quelle correction ?</div>` + choiceList(q, st, "fix", st.choice, st.answered);
+  }
+  return html;
+}
+
+function renderOrder(q, st){
+  const tile = (id, k, where, mark) => {
+    const it = st.items[id];
+    const ind = it.t.match(/^ */)[0].length; // l'indentation devient une marge, pour rester lisible même quand la ligne passe à la ligne
+    return `<button class="tile mono${mark || ""}" data-act="${where}" data-id="${id}" ${st.answered ? "disabled" : ""}>
+      <span class="n">${k != null ? k + 1 : "+"}</span><span class="src${ind ? " ind" : ""}" style="padding-left:${ind}ch">${hl(it.t.slice(ind), q.lang)}</span></button>`;
+  };
+  let marks = [];
+  if (st.answered){
+    const expected = q.items.map(x => x.g).sort((a, b) => a - b);
+    marks = st.sol.map((id, k) => { const it = st.items[id]; return (!it.d && it.g === expected[k]) ? " ok" : " bad"; });
+  }
+  return `
+    <div class="zone-title"><span>Ta solution</span><span>${st.sol.length} bloc${st.sol.length > 1 ? "s" : ""}</span></div>
+    <div class="sol${st.sol.length ? "" : " empty"}">${st.sol.map((id, k) => tile(id, k, "ord-back", marks[k])).join("")}</div>
+    ${st.pool.length && !st.answered ? `<div class="zone-title"><span>Blocs disponibles${q.distractors && q.distractors.length ? " (attention aux pièges)" : ""}</span></div>
+    <div class="pool">${st.pool.map(id => tile(id, null, "ord-add")).join("")}</div>` : ""}`;
+}
+
+function renderFill(q, st){
+  const f = q.template.replace(/\[\[(\d+)\]\]/g, (_, k) => {
+    k = +k;
+    const v = st.vals[k];
+    let cls = "blank";
+    if (v !== null) cls += " filled";
+    if (!st.answered && k === st.active) cls += " active";
+    if (st.answered) cls += v === q.blanks[k].answer ? " ok" : " bad";
+    return `<button class="${cls}" data-act="blank" data-k="${k}" ${st.answered ? "disabled" : ""} aria-label="Trou ${k + 1}">${v === null ? "?" : q.blanks[k].options[v]}</button>`;
+  });
+  let html = `<div class="formula">${f}</div>`;
+  if (!st.answered){
+    const b = q.blanks[st.active];
+    html += `<div class="step">Trou ${st.active + 1} sur ${q.blanks.length} :</div>
+      <div class="opts">${st.optPerm[st.active].map(i => `<button class="opt" data-act="opt" data-i="${i}">${b.options[i]}</button>`).join("")}</div>`;
+  }
+  return html;
+}
+
+function renderFeedback(q, st){
+  let ans = "";
+  if (!st.correct){
+    if (q.type === "mcq") ans = `Bonne réponse : <b>${txt(q.choices[q.answer])}</b>`;
+    if (q.type === "bug") ans = `Ligne fautive : <b>${q.bug.join(" ou ")}</b>. Correction : <b>${txt(q.choices[q.answer])}</b>`;
+    if (q.type === "order") ans = `Bon ordre :<div class="code">${q.items.map(x => hl(x.t, q.lang)).join("\n")}</div>`;
+    if (q.type === "fill") ans = `Réponses : ${q.blanks.map((b, k) => `<b>${k + 1}.</b> ${b.options[b.answer]}`).join(" · ")}`;
+  }
+  return `<div class="fb ${st.correct ? "ok" : "bad"} fade" id="fb">
+    <div class="h">${st.correct ? "Correct !" : "Pas tout à fait"}</div>
+    ${ans ? `<div class="ans">${ans}</div>` : ""}
+    <div class="exp">${txt(q.explain)}</div>
+  </div>`;
+}
+
+/* =================== validation =================== */
+function finish(correct){
+  const q = S.queue[S.i];
+  S.st.answered = true; S.st.correct = correct;
+  S.results.push({ id:q.id, correct });
+  if (correct) S.score++; else buzz();
+  store.answered++; if (correct) store.correct++;
+  const m = new Set(store.mistakes);
+  if (correct) m.delete(q.id); else m.add(q.id);
+  store.mistakes = [...m];
+  saveStore();
+  render();
+  const fb = document.getElementById("fb");
+  if (fb) setTimeout(() => fb.scrollIntoView({ behavior:"smooth", block:"nearest" }), 30);
+}
+
+function checkOrder(q, st){
+  const chosen = st.sol.map(id => st.items[id]);
+  if (chosen.some(it => it.d)) return false;
+  if (chosen.length !== q.items.length) return false;
+  for (let k = 1; k < chosen.length; k++) if (chosen[k].g < chosen[k - 1].g) return false;
+  return true;
+}
+
+/* =================== fin de partie =================== */
+function endScreen(){
+  const n = S.queue.length, pct = Math.round(100 * S.score / n);
+  if (S.kind === "deck"){
+    const prev = store.best[S.deckId];
+    if (prev == null || pct > prev) store.best[S.deckId] = pct;
+    saveStore();
+  }
+  const msg = pct === 100 ? "Sans faute." : pct >= 80 ? "Très bon niveau." : pct >= 50 ? "Bonne base, il reste quelques points à revoir." : "Lis bien les explications et refais une partie.";
+  const missed = S.results.filter(r => !r.correct).map(r => BYID[r.id]);
+  const R = 62, C = 2 * Math.PI * R;
+  $app.innerHTML = `
+  <div class="end fade">
+    <div class="ring">
+      <svg width="150" height="150" viewBox="0 0 150 150" aria-hidden="true">
+        <circle cx="75" cy="75" r="${R}" fill="none" stroke="var(--line)" stroke-width="12"/>
+        <circle cx="75" cy="75" r="${R}" fill="none" stroke="${pct >= 50 ? "var(--ok)" : "var(--bad)"}" stroke-width="12" stroke-linecap="round"
+          stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - pct / 100)}"/>
+      </svg>
+      <div class="v">${S.score}/${n}</div>
+    </div>
+    <h2>${pct}%</h2>
+    <p>${msg}</p>
+    ${missed.length ? `<div class="missed"><div class="section-title">À revoir</div><ul>${missed.map(q => `<li><b>${esc(q.deck.title)}</b> : ${txt(q.q)}</li>`).join("")}</ul></div>` : ""}
+  </div>`;
+  const again = S.kind === "deck" ? `data-act="deck" data-id="${S.deckId}"` : S.kind === "mix" ? `data-act="mix"` : `data-act="mistakes"`;
+  const canAgain = S.kind !== "mistakes" || store.mistakes.length;
+  setActions(`<button class="btn ghost" data-act="home">Accueil</button>${canAgain ? `<button class="btn" ${again}>Rejouer</button>` : ""}`);
+  window.scrollTo(0, 0);
+}
+
+/* =================== événements =================== */
+let resetArmed = false;
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-act]");
+  if (!el || el.disabled) return;
+  const act = el.dataset.act;
+  const q = S && S.queue[S.i], st = S && S.st;
+
+  switch (act){
+    case "home": home(); break;
+    case "quit": home(); break;
+    case "deck": startDeck(el.dataset.id); break;
+    case "mix": startMix(); break;
+    case "mistakes": if (store.mistakes.length) startMistakes(); else home(); break;
+    case "theme": cycleTheme(); break;
+    case "reset":
+      if (!resetArmed){ resetArmed = true; el.textContent = "Toucher encore pour confirmer"; setTimeout(() => { resetArmed = false; if (!S) home(); }, 3000); }
+      else { resetArmed = false; store.best = {}; store.mistakes = []; store.answered = 0; store.correct = 0; saveStore(); home(); }
+      break;
+
+    case "mcq":
+      if (st.answered) return;
+      st.choice = +el.dataset.i;
+      finish(st.choice === q.answer);
+      break;
+
+    case "line":
+      if (st.phase !== "line") return;
+      st.line = +el.dataset.n; st.phase = "fix";
+      if (!q.bug.includes(st.line)) buzz();
+      render();
+      break;
+    case "fix":
+      if (st.answered) return;
+      st.choice = +el.dataset.i;
+      finish(q.bug.includes(st.line) && st.choice === q.answer);
+      break;
+
+    case "ord-add":
+      st.pool = st.pool.filter(id => id !== el.dataset.id); st.sol.push(el.dataset.id); render(); break;
+    case "ord-back":
+      st.sol = st.sol.filter(id => id !== el.dataset.id); st.pool.push(el.dataset.id); render(); break;
+    case "ord-clear":
+      st.pool = st.pool.concat(st.sol); st.sol = []; render(); break;
+    case "ord-check":
+      finish(checkOrder(q, st)); break;
+
+    case "blank":
+      st.active = +el.dataset.k; render(); break;
+    case "opt": {
+      st.vals[st.active] = +el.dataset.i;
+      const nextEmpty = st.vals.findIndex((v, k) => v === null && k > st.active);
+      const anyEmpty = st.vals.findIndex(v => v === null);
+      st.active = nextEmpty >= 0 ? nextEmpty : anyEmpty >= 0 ? anyEmpty : st.active;
+      render(); break;
+    }
+    case "fill-check":
+      finish(st.vals.every((v, k) => v === q.blanks[k].answer)); break;
+
+    case "next":
+      if (S.i < S.queue.length - 1){ S.i++; showQuestion(); } else endScreen();
+      break;
+  }
+});
+
+home();
+
+/* mode appli : fonctionne hors ligne une fois installée (seulement en https, pas en fichier local) */
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+</script>
+</body>
+</html>
