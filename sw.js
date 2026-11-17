@@ -1,7 +1,7 @@
 /* Service worker : rend l'appli utilisable hors ligne.
    Stratégie « réseau d'abord » : en ligne, on récupère toujours la dernière version
    (tes nouvelles questions apparaissent tout de suite) ; hors ligne, on sert la copie en cache. */
-const CACHE = "prepa-cfd-v2";
+const CACHE = "prepa-cfd-v3";
 const FILES = [
   "./",
   "index.html",
@@ -27,10 +27,12 @@ self.addEventListener("activate", e => {
 
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
+  const sameOrigin = new URL(e.request.url).origin === location.origin;
   e.respondWith(
-    fetch(e.request)
+    // no-cache : on revalide auprès de GitHub à chaque ouverture (sinon le cache HTTP garde l'ancienne version ~10 min)
+    fetch(e.request, sameOrigin ? { cache: "no-cache" } : undefined)
       .then(res => {
-        if (res.ok && new URL(e.request.url).origin === location.origin) {
+        if (res.ok && sameOrigin) {
           const copy = res.clone();
           caches.open(CACHE).then(c => c.put(e.request, copy));
         }
