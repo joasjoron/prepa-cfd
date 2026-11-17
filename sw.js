@@ -1,7 +1,7 @@
 /* Service worker : rend l'appli utilisable hors ligne.
    Stratégie « réseau d'abord » : en ligne, on récupère toujours la dernière version
    (tes nouvelles questions apparaissent tout de suite) ; hors ligne, on sert la copie en cache. */
-const CACHE = "prepa-cfd-v1";
+const CACHE = "prepa-cfd-v2";
 const FILES = [
   "./",
   "index.html",

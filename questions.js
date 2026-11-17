@@ -12,9 +12,16 @@
             distractors = lignes pièges à ne pas utiliser
     fill  : formule à trous. template contient [[0]], [[1]]... ;
             blanks = [{options:[...], answer:index}, ...]
+            steps (optionnel) = développement mathématique affiché avec la solution
   Champs communs : q (énoncé), explain (explication affichée après la réponse),
   code / lang ("python", "bash") pour afficher du code.
 */
+
+/* Aides pour écrire les développements mathématiques (champ « steps » des formules à trous) :
+   _fr(numérateur, dénominateur) → fraction ;  _C("i+1", "n") → C indice i+1, exposant n
+   steps = liste de [texte de l'étape, formule] ; la formule peut être vide "". */
+const _fr = (a, b) => `<span class="fr"><span>${a}</span><span>${b}</span></span>`;
+const _C = (sub, sup) => `C<sub>${sub}</sub>` + (sup ? `<sup>${sup}</sup>` : "");
 
 const DECKS = [
 /* =====================================================================
@@ -587,6 +594,15 @@ print(C.sum())`,
     blanks: [
       { options: ["C<sub>i</sub><sup>n</sup>", "C<sub>i−1</sub><sup>n</sup>", "C<sub>i</sub><sup>n+1</sup>"], answer: 0 },
       { options: ["Δt", "Δx", "2Δt"], answer: 0 }],
+    steps: [
+      ["Développement de Taylor de C en temps, au point x<sub>i</sub> :",
+       `C(t + Δt) = C(t) + Δt ${_fr("∂C", "∂t")} + ${_fr("Δt²", "2")} ${_fr("∂²C", "∂t²")} + O(Δt³)`],
+      ["On isole la dérivée en temps :",
+       `${_fr("∂C", "∂t")} = ${_fr("C(t + Δt) − C(t)", "Δt")} − ${_fr("Δt", "2")} ${_fr("∂²C", "∂t²")} + O(Δt²)`],
+      ["En notation discrète (t = nΔt, x = iΔx), on garde le premier terme :",
+       `${_fr("∂C", "∂t")} ≈ ${_fr(_C("i", "n+1") + " − " + _C("i", "n"), "Δt")} + O(Δt)`],
+      ["Le premier terme négligé est proportionnel à Δt : schéma d'ordre 1 en temps. Diviser Δt par 2 divise l'erreur par 2.", ""]
+    ],
     explain: "Différence avant en temps entre le même point i aux instants n+1 et n, divisée par Δt. Elle est d'ordre 1 en temps." },
 
   { type: "fill",
@@ -595,6 +611,18 @@ print(C.sum())`,
     blanks: [
       { options: ["C<sub>i−1</sub>", "C<sub>i+1</sub>", "C<sub>i</sub>"], answer: 0 },
       { options: ["Δx", "2Δx", "Δx²"], answer: 0 }],
+    steps: [
+      ["Taylor vers le point amont i−1 (situé à −Δx) :",
+       `${_C("i−1")} = ${_C("i")} − Δx ${_fr("∂C", "∂x")} + ${_fr("Δx²", "2")} ${_fr("∂²C", "∂x²")} − …`],
+      ["On isole ∂C/∂x :",
+       `${_fr("∂C", "∂x")} = ${_fr(_C("i") + " − " + _C("i−1"), "Δx")} + ${_fr("Δx", "2")} ${_fr("∂²C", "∂x²")} + O(Δx²)`],
+      ["Pourquoi le point amont ? Avec u > 0, l'information arrive de la gauche : on n'utilise que des points d'où vient le fluide.", ""],
+      ["Ce que calcule réellement le schéma :",
+       `u ${_fr(_C("i") + " − " + _C("i−1"), "Δx")} = u ${_fr("∂C", "∂x")} − ${_fr("uΔx", "2")} ${_fr("∂²C", "∂x²")} + O(Δx²)`],
+      ["L'équation effectivement résolue (« équation modifiée ») contient donc un terme de diffusion en plus :",
+       `${_fr("∂C", "∂t")} + u ${_fr("∂C", "∂x")} = <b>${_fr("uΔx", "2")}</b> ${_fr("∂²C", "∂x²")}`],
+      ["Conclusion : ordre 1, avec une diffusion numérique D<sub>num</sub> = uΔx/2 proportionnelle à la taille de maille. C'est elle qui élargit artificiellement le panache.", ""]
+    ],
     explain: "Upwind = on prend l'information du côté d'où vient l'écoulement. Avec u > 0, c'est le point amont i−1. Si u < 0, on utilise C_{i+1} − C_i. Le schéma est d'ordre 1, robuste mais diffusif." },
 
   { type: "fill",
@@ -604,6 +632,16 @@ print(C.sum())`,
       { options: ["C<sub>i−1</sub>", "C<sub>i</sub>", "2C<sub>i</sub>"], answer: 0 },
       { options: ["2Δx", "Δx", "Δx²"], answer: 0 },
       { options: ["2", "1", "3"], answer: 0 }],
+    steps: [
+      ["Notation : C′ = ∂C/∂x, C″ = ∂²C/∂x², C‴ = ∂³C/∂x³. Taylor vers i+1 et vers i−1 :",
+       `${_C("i+1")} = ${_C("i")} + Δx C′ + ${_fr("Δx²", "2")} C″ + ${_fr("Δx³", "6")} C‴ + O(Δx⁴)`],
+      ["", `${_C("i−1")} = ${_C("i")} − Δx C′ + ${_fr("Δx²", "2")} C″ − ${_fr("Δx³", "6")} C‴ + O(Δx⁴)`],
+      ["On soustrait la 2e ligne de la 1re : C<sub>i</sub> et C″ s'annulent.",
+       `${_C("i+1")} − ${_C("i−1")} = 2Δx C′ + ${_fr("Δx³", "3")} C‴ + O(Δx⁵)`],
+      ["On divise par 2Δx :",
+       `C′ = ${_fr(_C("i+1") + " − " + _C("i−1"), "2Δx")} − ${_fr("Δx²", "6")} C‴ + O(Δx⁴)`],
+      ["L'erreur est en Δx² : schéma d'ordre 2. Diviser Δx par 2 divise l'erreur par 4.", ""]
+    ],
     explain: "On relie les deux voisins, distants de 2Δx. Les termes d'ordre 1 des développements de Taylor s'annulent : l'erreur est en Δx², donc d'ordre 2. En contrepartie, le schéma oscille si le Péclet de maille dépasse 2." },
 
   { type: "fill",
@@ -612,6 +650,16 @@ print(C.sum())`,
     blanks: [
       { options: ["2C<sub>i</sub>", "C<sub>i</sub>", "4C<sub>i</sub>"], answer: 0 },
       { options: ["Δx²", "2Δx", "Δx"], answer: 0 }],
+    steps: [
+      ["Taylor vers i+1 et vers i−1, poussé jusqu'à l'ordre 4 (C⁗ = ∂⁴C/∂x⁴) :",
+       `${_C("i+1")} = ${_C("i")} + Δx C′ + ${_fr("Δx²", "2")} C″ + ${_fr("Δx³", "6")} C‴ + ${_fr("Δx⁴", "24")} C⁗ + …`],
+      ["", `${_C("i−1")} = ${_C("i")} − Δx C′ + ${_fr("Δx²", "2")} C″ − ${_fr("Δx³", "6")} C‴ + ${_fr("Δx⁴", "24")} C⁗ − …`],
+      ["Cette fois on ADDITIONNE : les termes impairs (C′, C‴) s'annulent.",
+       `${_C("i+1")} + ${_C("i−1")} = 2${_C("i")} + Δx² C″ + ${_fr("Δx⁴", "12")} C⁗ + O(Δx⁶)`],
+      ["On isole C″ :",
+       `C″ = ${_fr(_C("i+1") + " − 2" + _C("i") + " + " + _C("i−1"), "Δx²")} − ${_fr("Δx²", "12")} C⁗ + O(Δx⁴)`],
+      ["Stencil (1, −2, 1)/Δx², d'ordre 2.", ""]
+    ],
     explain: "C'est le stencil (1, −2, 1)/Δx², qu'on retrouve partout en diffusion. Vérification : pour C constant, la dérivée vaut bien 0, puisque 1 − 2 + 1 = 0." },
 
   { type: "fill",
@@ -621,6 +669,16 @@ print(C.sum())`,
       { options: ["C<sub>i</sub><sup>n</sup>", "C<sub>i</sub><sup>n+1</sup>", "0"], answer: 0 },
       { options: ["Δt", "Δx", "u"], answer: 0 },
       { options: ["Δx²", "Δx", "Δt²"], answer: 0 }],
+    steps: [
+      ["Équation de diffusion 1D :", `${_fr("∂C", "∂t")} = D ${_fr("∂²C", "∂x²")}`],
+      ["Temps : Euler explicite (différence avant). Espace : différence centrée d'ordre 2, évaluée au temps n :",
+       `${_fr(_C("i", "n+1") + " − " + _C("i", "n"), "Δt")} = D ${_fr(_C("i+1", "n") + " − 2" + _C("i", "n") + " + " + _C("i−1", "n"), "Δx²")}`],
+      ["On multiplie par Δt :",
+       `${_C("i", "n+1")} − ${_C("i", "n")} = ${_fr("D Δt", "Δx²")} ( ${_C("i+1", "n")} − 2${_C("i", "n")} + ${_C("i−1", "n")} )`],
+      ["On pose r = DΔt/Δx² (nombre de Fourier) et on isole l'inconnue :",
+       `${_C("i", "n+1")} = ${_C("i", "n")} + r ( ${_C("i+1", "n")} − 2${_C("i", "n")} + ${_C("i−1", "n")} )`],
+      ["Tout le second membre est connu (temps n) : c'est pour ça qu'on parle de schéma « explicite ». Erreur de troncature : O(Δt) + O(Δx²).", ""]
+    ],
     explain: "On combine Euler explicite en temps et la dérivée seconde centrée en espace. Tout le second membre est pris au temps n, c'est pour ça qu'il faut une copie de l'ancien champ en Python." },
 
   { type: "fill",
@@ -629,6 +687,17 @@ print(C.sum())`,
     blanks: [
       { options: ["1/2", "1", "2"], answer: 0 },
       { options: ["1", "1/2", "10"], answer: 0 }],
+    steps: [
+      ["Méthode de von Neumann : on injecte un mode de Fourier d'angle θ = kΔx (j = indice de maille, i = √−1). Le schéma est stable si le facteur d'amplification vérifie |G| ≤ 1 pour tout θ.",
+       `${_C("j", "n")} = G<sup>n</sup> e<sup>i j θ</sup>`],
+      ["Diffusion FTCS : on remplace dans le schéma, puis on divise par G<sup>n</sup>e<sup>ijθ</sup> :",
+       `G = 1 + r ( e<sup>iθ</sup> − 2 + e<sup>−iθ</sup> ) = 1 + r ( 2 cos θ − 2 )`],
+      ["Avec 1 − cos θ = 2 sin²(θ/2) :", `G = 1 − 4r sin²(θ/2)`],
+      ["Pire cas, sin²(θ/2) = 1. On veut G ≥ −1 :", `1 − 4r ≥ −1  ⇔  <b>r = ${_fr("D Δt", "Δx²")} ≤ ${_fr("1", "2")}</b>`],
+      ["Convection upwind, avec σ = uΔt/Δx :", `G = 1 − σ ( 1 − e<sup>−iθ</sup> )`],
+      ["Module au carré :", `|G|² = (1 − σ + σ cos θ)² + (σ sin θ)² = 1 − 2σ(1 − σ)(1 − cos θ)`],
+      ["|G| ≤ 1 pour tout θ :", `σ(1 − σ) ≥ 0  ⇔  <b>0 ≤ σ = ${_fr("u Δt", "Δx")} ≤ 1</b>   (condition CFL)`]
+    ],
     explain: "Si on dépasse ces bornes, l'erreur est amplifiée à chaque pas et le calcul explose. Attention : la contrainte de diffusion varie en Δx². Diviser la maille par 2 oblige à diviser le pas de temps par 4." },
 
   { type: "fill",
@@ -638,6 +707,19 @@ print(C.sum())`,
       { options: ["(1 + 2r)", "(1 − 2r)", "2r"], answer: 0 },
       { options: ["C<sub>i</sub><sup>n</sup>", "0", "C<sub>i</sub><sup>n+1</sup>"], answer: 0 },
       { options: ["tridiagonale", "diagonale", "pleine"], answer: 0 }],
+    steps: [
+      ["Euler implicite : le laplacien est évalué au temps n+1 (inconnu) :",
+       `${_fr(_C("i", "n+1") + " − " + _C("i", "n"), "Δt")} = D ${_fr(_C("i+1", "n+1") + " − 2" + _C("i", "n+1") + " + " + _C("i−1", "n+1"), "Δx²")}`],
+      ["On multiplie par Δt, avec r = DΔt/Δx² :",
+       `${_C("i", "n+1")} − ${_C("i", "n")} = r ( ${_C("i+1", "n+1")} − 2${_C("i", "n+1")} + ${_C("i−1", "n+1")} )`],
+      ["On regroupe toutes les inconnues (n+1) à gauche :",
+       `−r ${_C("i−1", "n+1")} + (1 + 2r) ${_C("i", "n+1")} − r ${_C("i+1", "n+1")} = ${_C("i", "n")}`],
+      ["En écrivant cette ligne pour tous les points, on obtient un système linéaire :",
+       `A C<sup>n+1</sup> = C<sup>n</sup>,   A = tridiag( −r , 1 + 2r , −r )`],
+      ["A est à diagonale strictement dominante (1 + 2r > r + r) : le système a une solution unique, calculée en O(N) opérations par l'algorithme de Thomas.", ""],
+      ["Stabilité (von Neumann, mêmes notations que pour FTCS) :",
+       `G = ${_fr("1", "1 + 4r sin²(θ/2)")} ≤ 1   quel que soit r : schéma inconditionnellement stable`]
+    ],
     explain: "On écrit le laplacien au temps n+1 : C_i^{n+1} − C_i^n = r(C_{i+1} − 2C_i + C_{i−1})^{n+1}, puis on passe les inconnues à gauche. Chaque ligne ne couple que 3 voisins, d'où la matrice tridiagonale (algorithme de Thomas). Le schéma est stable pour tout Δt." },
 
   { type: "fill",
@@ -646,6 +728,16 @@ print(C.sum())`,
     blanks: [
       { options: ["0,5", "1", "0"], answer: 0 },
       { options: ["2", "1", "4"], answer: 0 }],
+    steps: [
+      ["Écriture générale pour dC/dt = L(C), où L est l'opérateur spatial discrétisé :",
+       `${_fr("C<sup>n+1</sup> − C<sup>n</sup>", "Δt")} = θ L(C<sup>n+1</sup>) + (1 − θ) L(C<sup>n</sup>)`],
+      ["Cas particuliers :", `θ = 0 : Euler explicite    θ = 1 : Euler implicite    θ = ½ : Crank-Nicolson`],
+      ["On développe autour du milieu t<sup>n+½</sup> = t<sup>n</sup> + Δt/2. Le quotient de gauche y est centré :",
+       `${_fr("C<sup>n+1</sup> − C<sup>n</sup>", "Δt")} = ${_fr("dC", "dt")}(t<sup>n+½</sup>) + ${_fr("Δt²", "24")} ${_fr("d³C", "dt³")} + …`],
+      [`À droite, avec L<sup>n+1</sup> = L<sup>n+½</sup> + (Δt/2) L′ + … et L<sup>n</sup> = L<sup>n+½</sup> − (Δt/2) L′ + … :`,
+       `θ L<sup>n+1</sup> + (1 − θ) L<sup>n</sup> = L<sup>n+½</sup> + (θ − ½) Δt L′ + O(Δt²)`],
+      ["Le terme (θ − ½)ΔtL′ est d'ordre 1. Il ne disparaît que pour θ = ½ : Crank-Nicolson est d'ordre 2, tous les autres choix d'ordre 1.", ""]
+    ],
     explain: "θ = 0 donne Euler explicite, θ = 1 Euler implicite, θ = 0,5 la moyenne des deux, soit Crank-Nicolson, d'ordre 2. C'est le « theta = 0.5 » vu dans le log Code_Saturne quand la LES était activée." },
 
   { type: "fill",
@@ -654,6 +746,16 @@ print(C.sum())`,
     blanks: [
       { options: ["C<sub>P</sub>", "C<sub>N</sub>", "(C<sub>P</sub>+C<sub>N</sub>)/2"], answer: 0 },
       { options: ["C<sub>N</sub>", "C<sub>P</sub>", "0"], answer: 0 }],
+    steps: [
+      ["Équation de transport sous forme conservative :", `${_fr("∂C", "∂t")} + ∇·(<b>u</b> C) = 0`],
+      ["On intègre sur le volume V<sub>P</sub> de la cellule P :",
+       `∫<sub>VP</sub> ${_fr("∂C", "∂t")} dV + ∫<sub>VP</sub> ∇·(<b>u</b> C) dV = 0`],
+      ["Théorème de la divergence : l'intégrale de volume devient une somme de flux à travers les faces f :",
+       `V<sub>P</sub> ${_fr("dC<sub>P</sub>", "dt")} + Σ<sub>f</sub> F<sub>f</sub> C<sub>f</sub> = 0,   F<sub>f</sub> = (<b>u</b>·<b>n</b>)<sub>f</sub> S<sub>f</sub>`],
+      ["On ne connaît C qu'aux centres (C<sub>P</sub>, C<sub>N</sub>), mais il faut une valeur C<sub>f</sub> sur la face. Upwind : on prend la cellule d'où vient le flux.",
+       `C<sub>f</sub> = C<sub>P</sub>  si F<sub>f</sub> > 0 (le fluide sort de P),    C<sub>f</sub> = C<sub>N</sub>  si F<sub>f</sub> < 0`],
+      ["Conservation : le flux F<sub>f</sub>C<sub>f</sub> qui sort de P est exactement celui qui entre dans N. La masse totale est conservée, quelle que soit la forme des cellules.", ""]
+    ],
     explain: "n pointe de P vers N. Si le flux sort de P, on transporte la valeur de P, sinon celle de N. La moyenne (C_P + C_N)/2, c'est l'interpolation linéaire, l'équivalent du centré. En volumes finis, on somme ensuite les flux sur toutes les faces : Σ_f (u·S)_f C_f." },
 
   { type: "fill",
@@ -662,6 +764,18 @@ print(C.sum())`,
     blanks: [
       { options: ["u·Δx", "u·Δt", "D·Δx"], answer: 0 },
       { options: ["2", "1", "100"], answer: 0 }],
+    steps: [
+      ["Convection-diffusion 1D stationnaire :", `u ${_fr("dC", "dx")} = D ${_fr("d²C", "dx²")}`],
+      ["Différences centrées pour les deux termes :",
+       `u ${_fr(_C("i+1") + " − " + _C("i−1"), "2Δx")} = D ${_fr(_C("i+1") + " − 2" + _C("i") + " + " + _C("i−1"), "Δx²")}`],
+      ["On multiplie par Δx²/D et on pose Pe = uΔx/D :",
+       `${_fr("Pe", "2")} ( ${_C("i+1")} − ${_C("i−1")} ) = ${_C("i+1")} − 2${_C("i")} + ${_C("i−1")}`],
+      ["On isole C<sub>i</sub> :",
+       `${_C("i")} = ${_fr("(1 − Pe/2) " + _C("i+1") + " + (1 + Pe/2) " + _C("i−1"), "2")}`],
+      ["C<sub>i</sub> est une moyenne pondérée de ses voisins (donc bornée, sans oscillation) seulement si les deux poids sont positifs :",
+       `1 − ${_fr("Pe", "2")} ≥ 0  ⇔  <b>Pe ≤ 2</b>`],
+      ["Si Pe > 2, le poids de C<sub>i+1</sub> devient négatif : C<sub>i</sub> peut sortir de l'intervalle formé par ses voisins. Ce sont les oscillations (« wiggles »), par exemple des concentrations négatives.", ""]
+    ],
     explain: "Pe compare la convection à la diffusion à l'échelle d'une maille. Dans un écoulement atmosphérique, Pe est très grand, d'où l'usage d'upwind, de schémas limités ou du test de pente." },
 
   { type: "fill",
@@ -670,6 +784,20 @@ print(C.sum())`,
     blanks: [
       { options: ["u", "u²", "D"], answer: 0 },
       { options: ["(z+H)", "(z−H)", "z"], answer: 0 }],
+    steps: [
+      ["Hypothèses : vent u constant selon x, diffusivités turbulentes K<sub>y</sub> et K<sub>z</sub> constantes, diffusion selon x négligée devant le transport par le vent :",
+       `u ${_fr("∂C", "∂x")} = K<sub>y</sub> ${_fr("∂²C", "∂y²")} + K<sub>z</sub> ${_fr("∂²C", "∂z²")}`],
+      ["Changement de variable t = x/u (temps de vol depuis la source) :",
+       `${_fr("∂C", "∂t")} = K<sub>y</sub> ${_fr("∂²C", "∂y²")} + K<sub>z</sub> ${_fr("∂²C", "∂z²")}`],
+      ["C'est une diffusion 2D à partir d'un point. Pendant dt, la source émet Q dt, réparti sur dx = u dt : la quantité par unité de longueur vaut Q/u. Solution fondamentale (source en z = H) :",
+       `C = ${_fr("Q / u", "2π σ<sub>y</sub> σ<sub>z</sub>")} <span class="nw">exp(− ${_fr("y²", "2σ<sub>y</sub>²")})</span> <span class="nw">exp(− ${_fr("(z − H)²", "2σ<sub>z</sub>²")})</span><br>avec σ² = 2Kt = ${_fr("2Kx", "u")}`],
+      ["Le sol ne laisse rien passer : flux nul en z = 0, soit ∂C/∂z = 0. On l'impose en ajoutant une source image symétrique en z = −H :",
+       `<span class="nw">exp(− ${_fr("(z − H)²", "2σ<sub>z</sub>²")})</span> + <span class="nw">exp(− ${_fr("(z + H)²", "2σ<sub>z</sub>²")})</span>`],
+      ["Vérification en z = 0 : les dérivées des deux exponentielles valent +H/σ<sub>z</sub>² et −H/σ<sub>z</sub>² fois le même facteur e<sup>−H²/2σ<sub>z</sub>²</sup>. Elles s'annulent, la condition est respectée.", ""],
+      ["Résultat :",
+       `C = ${_fr("Q", "2π u σ<sub>y</sub> σ<sub>z</sub>")} <span class="nw">exp(− ${_fr("y²", "2σ<sub>y</sub>²")})</span><br>× [ <span class="nw">exp(− ${_fr("(z − H)²", "2σ<sub>z</sub>²")})</span> + <span class="nw">exp(− ${_fr("(z + H)²", "2σ<sub>z</sub>²")})</span> ]`],
+      ["En pratique, σ<sub>y</sub>(x) et σ<sub>z</sub>(x) ne sont pas calculés à partir de K, mais tirés de corrélations empiriques selon la classe de stabilité de Pasquill.", ""]
+    ],
     explain: "Le débit Q est dilué par le vent u : plus de vent, moins de concentration. Le 2e terme est une source image à −H qui « réfléchit » le panache sur le sol (pas d'absorption). σy et σz dépendent de la distance et de la classe de Pasquill." },
 
   { type: "fill",
@@ -679,6 +807,19 @@ print(C.sum())`,
       { options: ["u*", "U<sub>ref</sub>", "z<sub>0</sub>"], answer: 0 },
       { options: ["z<sub>0</sub>", "z", "H"], answer: 0 },
       { options: ["0,41", "1", "9,81"], answer: 0 }],
+    steps: [
+      ["Près du sol (couche de surface), la contrainte de cisaillement est quasi constante. Elle définit la vitesse de frottement u* :",
+       `τ / ρ = u*²`],
+      ["Hypothèse de longueur de mélange de Prandtl, ℓ = κz, avec ν<sub>t</sub> = ℓ² |dU/dz| :",
+       `τ / ρ = ν<sub>t</sub> ${_fr("dU", "dz")} = (κ z)² ( ${_fr("dU", "dz")} )²`],
+      ["On égalise les deux expressions et on prend la racine :",
+       `u* = κ z ${_fr("dU", "dz")}   ⇒   ${_fr("dU", "dz")} = ${_fr("u*", "κ z")}`],
+      ["On intègre en z :", `U(z) = ${_fr("u*", "κ")} ln z + constante`],
+      ["La constante est fixée par U(z<sub>0</sub>) = 0, ce qui définit la rugosité z<sub>0</sub> :",
+       `U(z) = ${_fr("u*", "κ")} ln ${_fr("z", "z<sub>0</sub>")}`],
+      ["Forme décalée utilisée dans les codes, pour avoir U(0) = 0 (identique dès que z ≫ z<sub>0</sub>). κ ≈ 0,41 est mesuré expérimentalement :",
+       `U(z) = ${_fr("u*", "κ")} ln ${_fr("z + z<sub>0</sub>", "z<sub>0</sub>")}`]
+    ],
     explain: "u* est la vitesse de frottement, z₀ la rugosité et κ la constante de von Kármán. En z = 0, ln(1) = 0 et la vitesse est nulle au sol. C'est l'entrée « ABL » des cas de dispersion." },
   ]
 },
